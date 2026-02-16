@@ -10,14 +10,13 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     const errorDiv = document.getElementById('loginError');
     
     loginBtn.disabled = true;
-    loginBtn.querySelector('span').style.display = 'none';
-    loginBtn.querySelector('.loading-spinner-small').style.display = 'inline';
+    loginBtn.innerHTML = '⏳ Logging in...';
     errorDiv.textContent = '';
     
     try {
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        showNotification('Login successful! Redirecting...', 'success');
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        showNotification('Login successful!');
         setTimeout(() => {
             window.location.href = 'dashboard.html';
         }, 1500);
@@ -25,13 +24,13 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         let message = 'Login failed. ';
         switch(error.code) {
             case 'auth/user-not-found':
-                message += 'No account found with this email.';
+                message += 'No account found.';
                 break;
             case 'auth/wrong-password':
                 message += 'Incorrect password.';
                 break;
             case 'auth/invalid-email':
-                message += 'Invalid email format.';
+                message += 'Invalid email.';
                 break;
             default:
                 message += error.message;
@@ -40,8 +39,7 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
         showNotification(message, 'error');
     } finally {
         loginBtn.disabled = false;
-        loginBtn.querySelector('span').style.display = 'inline';
-        loginBtn.querySelector('.loading-spinner-small').style.display = 'none';
+        loginBtn.innerHTML = 'Login';
     }
 });
 
@@ -63,20 +61,19 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     }
     
     if (!terms) {
-        errorDiv.textContent = 'You must agree to the terms';
+        errorDiv.textContent = 'You must agree to terms';
         return;
     }
     
     registerBtn.disabled = true;
-    registerBtn.querySelector('span').style.display = 'none';
-    registerBtn.querySelector('.loading-spinner-small').style.display = 'inline';
+    registerBtn.innerHTML = '⏳ Creating account...';
     errorDiv.textContent = '';
     
     try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
         await userCredential.user.updateProfile({ displayName: fullName });
         
-        await db.collection('users').doc(userCredential.user.uid).set({
+        await firebase.firestore().collection('users').doc(userCredential.user.uid).set({
             fullName,
             email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -87,7 +84,7 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
             }
         });
         
-        showNotification('Registration successful! Redirecting...', 'success');
+        showNotification('Registration successful!');
         setTimeout(() => {
             window.location.href = 'dashboard.html';
         }, 1500);
@@ -97,11 +94,8 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
             case 'auth/email-already-in-use':
                 message += 'Email already registered.';
                 break;
-            case 'auth/invalid-email':
-                message += 'Invalid email format.';
-                break;
             case 'auth/weak-password':
-                message += 'Password should be at least 6 characters.';
+                message += 'Password too weak.';
                 break;
             default:
                 message += error.message;
@@ -110,87 +104,16 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
         showNotification(message, 'error');
     } finally {
         registerBtn.disabled = false;
-        registerBtn.querySelector('span').style.display = 'inline';
-        registerBtn.querySelector('.loading-spinner-small').style.display = 'none';
+        registerBtn.innerHTML = 'Create Account';
     }
 });
 
-// Logout function
-window.logout = function() {
-    auth.signOut()
-        .then(() => {
-            localStorage.removeItem('safepass_data');
-            showNotification('Logged out successfully', 'success');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1500);
-        })
-        .catch(() => {
-            showNotification('Error logging out', 'error');
-        });
-};
-
-// Check auth state on dashboard
-if (window.location.pathname.includes('dashboard.html')) {
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            document.getElementById('userEmail').textContent = user.email;
-            loadUserData(user.uid);
-        } else {
-            window.location.href = 'login.html';
-        }
-    });
-}
-
-// Load user data for dashboard
-async function loadUserData(userId) {
-    try {
-        const doc = await db.collection('users').doc(userId).get();
-        if (doc.exists) {
-            const userData = doc.data().emergencyInfo || { personal: {}, medical: {}, contacts: [] };
-            window.userData = userData;
-            
-            // Populate forms
-            if (userData.personal) {
-                document.getElementById('fullName').value = userData.personal.fullName || '';
-                document.getElementById('dob').value = userData.personal.dob || '';
-                document.getElementById('gender').value = userData.personal.gender || 'Male';
-                document.getElementById('cnic').value = userData.personal.cnic || '';
-                document.getElementById('address').value = userData.personal.address || '';
-                document.getElementById('nationality').value = userData.personal.nationality || 'Pakistani';
-                document.getElementById('language').value = userData.personal.language || 'Urdu';
-            }
-            
-            if (userData.medical) {
-                document.getElementById('bloodGroup').value = userData.medical.bloodGroup || 'O+';
-                document.getElementById('allergies').value = userData.medical.allergies?.join(', ') || '';
-                document.getElementById('conditions').value = userData.medical.conditions?.join(', ') || '';
-                document.getElementById('medications').value = userData.medical.medications?.join(', ') || '';
-                document.getElementById('organDonor').checked = userData.medical.organDonor || false;
-            }
-            
-            // Update preview
-            document.getElementById('previewName').textContent = userData.personal?.fullName || 'Not set';
-            document.getElementById('previewBlood').textContent = userData.medical?.bloodGroup || '-';
-            document.getElementById('previewAllergies').textContent = userData.medical?.allergies?.join(', ') || 'None';
-            
-            // Setup contacts
-            setupContactForms(userData.contacts || []);
-            
-            // Cache data for lock screen
-            localStorage.setItem('safepass_data', JSON.stringify(userData));
-        }
-    } catch (error) {
-        console.error('Error loading user data:', error);
-        showNotification('Error loading data', 'error');
-    }
-}
-
-function showNotification(message, type) {
+// Show notification function
+function showNotification(message, type = 'info') {
     const toast = document.getElementById('toast');
     if (toast) {
         toast.textContent = message;
-        toast.style.background = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#d32f2f';
+        toast.style.background = type === 'error' ? '#dc3545' : '#28a745';
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 3000);
     } else {
