@@ -1,4 +1,4 @@
-// dashboard.js - SafePass Dashboard (COMPLETE WORKING VERSION)
+// dashboard.js - SafePass Dashboard (FIXED VERSION)
 
 // Global variables
 let currentUser = null;
@@ -8,26 +8,40 @@ let userData = {
     contacts: []
 };
 
-// Check authentication on page load
+// Check authentication immediately when page loads
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Dashboard.js loaded, checking auth...');
+    checkAuth();
+});
+
+// Check authentication state
+function checkAuth() {
     firebase.auth().onAuthStateChanged(function(user) {
         if (user) {
+            console.log('✅ User authenticated:', user.email);
             currentUser = user;
             document.getElementById('userEmail').textContent = user.email;
             loadUserData(user.uid);
         } else {
+            console.log('❌ No user authenticated, redirecting to login');
             window.location.href = 'login.html';
         }
     });
-});
+}
 
 // Load user data from Firestore
 async function loadUserData(userId) {
     try {
+        console.log('Loading user data for:', userId);
         const doc = await firebase.firestore().collection('users').doc(userId).get();
         
         if (doc.exists) {
-            userData = doc.data().emergencyInfo || { personal: {}, medical: {}, contacts: [] };
+            userData = doc.data().emergencyInfo || { 
+                personal: {}, 
+                medical: {}, 
+                contacts: [] 
+            };
+            console.log('✅ User data loaded:', userData);
             
             // Fill personal info
             if (userData.personal) {
@@ -42,21 +56,37 @@ async function loadUserData(userId) {
             
             // Fill medical info
             if (userData.medical) {
-                document.getElementById('bloodGroup').value = userData.medical.bloodGroup || 'O+';
+                document.getElementById('bloodGroup').value = userData.medical.bloodGroup || 'A+';
                 document.getElementById('allergies').value = (userData.medical.allergies || []).join(', ');
                 document.getElementById('conditions').value = (userData.medical.conditions || []).join(', ');
                 document.getElementById('medications').value = (userData.medical.medications || []).join(', ');
-                document.getElementById('organDonor').checked = userData.medical.organDonor || false;
+                
+                const organDonor = document.getElementById('organDonor');
+                if (organDonor) organDonor.checked = userData.medical.organDonor || false;
             }
             
             // Update preview
             updatePreview(userData);
             
             // Setup contacts
-            setupContactForms(userData.contacts || []);
+            if (userData.contacts) {
+                setupContactForms(userData.contacts);
+            }
             
             // Cache for lock screen
             localStorage.setItem('safepass_data', JSON.stringify(userData));
+            
+        } else {
+            console.log('No user document found, creating...');
+            // Create default document
+            await firebase.firestore().collection('users').doc(userId).set({
+                email: currentUser.email,
+                emergencyInfo: {
+                    personal: {},
+                    medical: {},
+                    contacts: []
+                }
+            });
         }
     } catch (error) {
         console.error('Error loading data:', error);
@@ -66,9 +96,13 @@ async function loadUserData(userId) {
 
 // Update preview card
 function updatePreview(data) {
-    document.getElementById('previewName').textContent = data.personal?.fullName || 'Not set';
-    document.getElementById('previewBlood').textContent = data.medical?.bloodGroup || '-';
-    document.getElementById('previewAllergies').textContent = 
+    const previewName = document.getElementById('previewName');
+    const previewBlood = document.getElementById('previewBlood');
+    const previewAllergies = document.getElementById('previewAllergies');
+    
+    if (previewName) previewName.textContent = data.personal?.fullName || 'Not set';
+    if (previewBlood) previewBlood.textContent = data.medical?.bloodGroup || '-';
+    if (previewAllergies) previewAllergies.textContent = 
         (data.medical?.allergies || []).join(', ') || 'None';
 }
 
@@ -85,8 +119,13 @@ window.switchTab = function(tabName) {
 window.savePersonalInfo = async function(event) {
     event.preventDefault();
     
+    // Check if user is authenticated
     if (!currentUser) {
+        console.log('No current user found');
         showNotification('Please login again', 'error');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
         return;
     }
     
@@ -102,6 +141,7 @@ window.savePersonalInfo = async function(event) {
     };
     
     try {
+        console.log('Saving personal data for:', currentUser.uid);
         await firebase.firestore().collection('users').doc(currentUser.uid).set({
             emergencyInfo: {
                 ...userData,
@@ -116,14 +156,19 @@ window.savePersonalInfo = async function(event) {
         showNotification('✅ Personal info saved!', 'success');
     } catch (error) {
         console.error('Error saving:', error);
-        showNotification('Error saving data', 'error');
+        showNotification('Error saving data: ' + error.message, 'error');
     }
 };
 
 // Save Medical Info
 window.saveMedicalInfo = async function() {
+    // Check if user is authenticated
     if (!currentUser) {
+        console.log('No current user found');
         showNotification('Please login again', 'error');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
         return;
     }
     
@@ -132,18 +177,12 @@ window.saveMedicalInfo = async function() {
         allergies: document.getElementById('allergies').value.split(',').map(s => s.trim()).filter(s => s),
         conditions: document.getElementById('conditions').value.split(',').map(s => s.trim()).filter(s => s),
         medications: document.getElementById('medications').value.split(',').map(s => s.trim()).filter(s => s),
-        surgeries: document.getElementById('surgeries')?.value ? 
-            document.getElementById('surgeries').value.split(',').map(s => s.trim()).filter(s => s) : [],
-        organDonor: document.getElementById('organDonor').checked,
-        insuranceProvider: document.getElementById('insuranceProvider')?.value || '',
-        insuranceNumber: document.getElementById('insuranceNumber')?.value || '',
-        physician: document.getElementById('physician')?.value || '',
-        hospital: document.getElementById('hospital')?.value || '',
-        specialNotes: document.getElementById('specialNotes')?.value || '',
+        organDonor: document.getElementById('organDonor')?.checked || false,
         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
     };
     
     try {
+        console.log('Saving medical data for:', currentUser.uid);
         await firebase.firestore().collection('users').doc(currentUser.uid).set({
             emergencyInfo: {
                 ...userData,
@@ -158,18 +197,17 @@ window.saveMedicalInfo = async function() {
         showNotification('✅ Medical info saved!', 'success');
     } catch (error) {
         console.error('Error saving:', error);
-        showNotification('Error saving data', 'error');
+        showNotification('Error saving data: ' + error.message, 'error');
     }
 };
 
 // Add Contact Form
 window.addContact = function() {
     const container = document.getElementById('contactsContainer');
-    const contactId = Date.now();
+    if (!container) return;
     
     const div = document.createElement('div');
     div.className = 'contact-form';
-    div.dataset.id = contactId;
     div.innerHTML = `
         <button class="remove-contact" onclick="this.parentElement.remove()">✕</button>
         <div class="form-group">
@@ -184,10 +222,6 @@ window.addContact = function() {
             <label>Phone Number</label>
             <input type="tel" class="contact-phone" placeholder="+92 XXX XXXXXXX" required>
         </div>
-        <div class="form-group">
-            <label>Priority</label>
-            <input type="number" class="contact-priority" value="1" min="1">
-        </div>
     `;
     container.appendChild(div);
 };
@@ -195,6 +229,8 @@ window.addContact = function() {
 // Setup contact forms
 function setupContactForms(contacts) {
     const container = document.getElementById('contactsContainer');
+    if (!container) return;
+    
     container.innerHTML = '';
     
     if (contacts && contacts.length > 0) {
@@ -215,10 +251,6 @@ function setupContactForms(contacts) {
                     <label>Phone Number</label>
                     <input type="tel" class="contact-phone" value="${contact.phone || ''}" required>
                 </div>
-                <div class="form-group">
-                    <label>Priority</label>
-                    <input type="number" class="contact-priority" value="${contact.priority || 1}" min="1">
-                </div>
             `;
             container.appendChild(div);
         });
@@ -229,6 +261,9 @@ function setupContactForms(contacts) {
 window.saveAllContacts = async function() {
     if (!currentUser) {
         showNotification('Please login again', 'error');
+        setTimeout(() => {
+            window.location.href = 'login.html';
+        }, 2000);
         return;
     }
     
@@ -237,14 +272,12 @@ window.saveAllContacts = async function() {
         const name = form.querySelector('.contact-name')?.value;
         const relation = form.querySelector('.contact-relation')?.value;
         const phone = form.querySelector('.contact-phone')?.value;
-        const priority = form.querySelector('.contact-priority')?.value;
         
         if (name && phone) {
             contacts.push({
                 name: name,
                 relation: relation || 'Contact',
-                phone: phone,
-                priority: parseInt(priority) || 1
+                phone: phone
             });
         }
     });
@@ -286,12 +319,13 @@ window.logout = function() {
     firebase.auth().signOut()
         .then(() => {
             localStorage.removeItem('safepass_data');
-            showNotification('Logged out', 'success');
+            showNotification('Logged out successfully', 'success');
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1500);
         })
         .catch((error) => {
+            console.error('Logout error:', error);
             showNotification('Error logging out', 'error');
         });
 };
@@ -299,22 +333,17 @@ window.logout = function() {
 // Show notification
 function showNotification(message, type = 'info') {
     const toast = document.getElementById('toast');
-    if (!toast) return;
+    if (!toast) {
+        console.log(message);
+        return;
+    }
     
     toast.textContent = message;
     toast.style.background = type === 'error' ? '#dc3545' : 
                             type === 'success' ? '#28a745' : '#d32f2f';
-    toast.style.color = type === 'warning' ? '#333' : 'white';
     toast.classList.add('show');
     
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
 }
-
-// Make functions globally available
-window.saveMedicalInfo = saveMedicalInfo;
-window.addContact = addContact;
-window.saveAllContacts = saveAllContacts;
-window.exportData = exportData;
-window.logout = logout;
