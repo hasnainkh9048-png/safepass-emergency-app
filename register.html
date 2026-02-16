@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - SafePass Owner</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="index.html" class="back-link">← Back to Emergency View</a>
+                <div class="auth-icon">📝</div>
+                <h1>Owner Registration</h1>
+                <p>Create your SafePass account</p>
+            </div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" placeholder="As per CNIC" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="your@email.com" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group half">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="••••••••" required minlength="6">
+                    </div>
+                    <div class="form-group half">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" placeholder="••••••••" required>
+                    </div>
+                </div>
+                
+                <div class="form-group checkbox">
+                    <input type="checkbox" id="terms" required>
+                    <label for="terms">I agree my emergency info will be visible on lock screen</label>
+                </div>
+                
+                <button type="submit" class="auth-btn" id="registerBtn">
+                    <span>Create Account</span>
+                    <span class="loading-spinner-small" style="display: none;">⏳</span>
+                </button>
+                
+                <div class="error-message" id="registerError"></div>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Already have an account? <a href="login.html">Login here</a></p>
+            </div>
+        </div>
+        
+        <div class="auth-info">
+            <h3>Your Information Saves Lives</h3>
+            <div class="info-box">
+                <p>By registering, you enable:</p>
+                <ul>
+                    <li>🚑 First responders to identify you</li>
+                    <li>🩸 Know your blood group immediately</li>
+                    <li>⚠️ Be aware of your allergies</li>
+                    <li>📞 Contact your family instantly</li>
+                </ul>
+            </div>
+            <p class="developer">Made by Muhammad Hasnain<br>Software Engineering Student, Pakistan</p>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

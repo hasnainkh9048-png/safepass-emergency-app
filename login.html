@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SafePass Owner</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <a href="index.html" class="back-link">← Back to Emergency View</a>
+                <div class="auth-icon">🔐</div>
+                <h1>Owner Login</h1>
+                <p>Access your SafePass dashboard</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="your@email.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                
+                <button type="submit" class="auth-btn" id="loginBtn">
+                    <span>Login</span>
+                    <span class="loading-spinner-small" style="display: none;">⏳</span>
+                </button>
+                
+                <div class="error-message" id="loginError"></div>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="register.html">Register as Owner</a></p>
+                <p class="note">Only owners can edit emergency information</p>
+            </div>
+        </div>
+        
+        <div class="auth-info">
+            <h3>🛡️ SafePass</h3>
+            <div class="info-box">
+                <p>Your emergency information saves lives:</p>
+                <ul>
+                    <li>🚑 First responders identify you</li>
+                    <li>🩸 Blood group known immediately</li>
+                    <li>⚠️ Allergies visible</li>
+                    <li>📞 Family contacted instantly</li>
+                </ul>
+            </div>
+            <p class="developer">Made by Muhammad Hasnain<br>Software Engineering Student, Pakistan</p>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>
