@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>SafePass Emergency App</title>
+	<!-- Add these scripts in the HEAD section or before closing body tag -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<!-- Add these BEFORE your firebase-config.js -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="firebase-config.js"></script>
+    <meta name="description" content="Emergency ID - Your life-saving information always accessible">
+    <meta name="theme-color" content="#d32f2f">
+    
+    <!-- PWA Tags -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- LOCK SCREEN EMERGENCY VIEW - Visible to everyone -->
+    <div class="lock-screen-view" id="lockScreenView">
+        <div class="emergency-banner">
+            <span class="blink">🚨 EMERGENCY - MEDICAL ID 🚨</span>
+        </div>
+        
+        <div class="lock-screen-content">
+            <div class="emergency-header">
+                <div class="emergency-icon">🆘</div>
+                <h1>Emergency Information</h1>
+                <p class="lock-screen-subtitle">This person needs help - Please call their emergency contacts</p>
+            </div>
+            
+            <!-- Profile Info - Will be populated from localStorage -->
+            <div class="emergency-profile-card" id="emergencyProfileCard">
+                <div class="loading-spinner" id="lockScreenLoading">Loading emergency information...</div>
+                
+                <div class="emergency-person" id="emergencyPersonSection" style="display: none;">
+                    <div class="emergency-avatar" id="lockScreenAvatar">👤</div>
+                    <div class="emergency-person-details">
+                        <h2 id="lockScreenName">Not Available</h2>
+                        <p id="lockScreenAgeGender">-</p>
+                    </div>
+                </div>
+                
+                <div class="emergency-blood-group" id="emergencyBloodSection" style="display: none;">
+                    <span class="blood-label">BLOOD GROUP</span>
+                    <span class="blood-value" id="lockScreenBloodValue">---</span>
+                </div>
+                
+                <div class="emergency-critical" id="emergencyCriticalSection" style="display: none;">
+                    <div class="critical-item">
+                        <span class="critical-label">⚠️ ALLERGIES</span>
+                        <span class="critical-value" id="lockScreenAllergies">None listed</span>
+                    </div>
+                    <div class="critical-item">
+                        <span class="critical-label">💊 CONDITIONS</span>
+                        <span class="critical-value" id="lockScreenConditions">None listed</span>
+                    </div>
+                    <div class="critical-item">
+                        <span class="critical-label">📋 MEDICATIONS</span>
+                        <span class="critical-value" id="lockScreenMeds">None listed</span>
+                    </div>
+                </div>
+                
+                <div class="emergency-ids" id="emergencyIdSection" style="display: none;">
+                    <div class="id-item">
+                        <span>CNIC:</span>
+                        <span id="lockScreenCNIC">Not available</span>
+                    </div>
+                    <div class="id-item">
+                        <span>Address:</span>
+                        <span id="lockScreenAddress">Not available</span>
+                    </div>
+                </div>
+                
+                <div class="emergency-contacts-section" id="emergencyContactsSection" style="display: none;">
+                    <h3>📞 EMERGENCY CONTACTS - PLEASE CALL</h3>
+                    <div class="emergency-contacts-list" id="lockScreenContacts"></div>
+                </div>
+                
+                <div class="emergency-actions">
+                    <button class="emergency-call-all" id="lockScreenCallAll" onclick="callAllContacts()">
+                        📞 CALL ALL CONTACTS
+                    </button>
+                    <button class="emergency-view-app" id="ownerLoginBtn" onclick="window.location.href='login.html'">
+                        🔐 Owner Login / Register
+                    </button>
+                </div>
+                
+                <div class="emergency-footer">
+                    <p>This information is available without unlocking</p>
+                    <p class="app-signature">Emergency ID - Made by Muhammad Hasnain (Software Engineering Student, Pakistan)</p>
+                </div>
+            </div>
+            
+            <!-- No Data Message -->
+            <div class="no-data-card" id="noDataCard">
+                <div class="no-data-icon">📱</div>
+                <h3>No Emergency Information Found</h3>
+                <p>If this is your phone, please register as an owner to add your emergency information.</p>
+                <button class="register-btn" onclick="window.location.href='register.html'">
+                    👤 Register as Owner
+                </button>
+                <p class="login-link">Already registered? <a href="login.html">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toast">Notification</div>
+
+    <!-- JavaScript -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+    
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker error:', err));
+            });
+        }
+    </script>
+</body>
+</html>
