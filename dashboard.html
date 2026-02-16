@@ -55,9 +55,10 @@
             <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
         </div>
 
+        <!-- Personal Tab -->
         <div class="tab-content active" id="personalTab">
             <h2>Personal Information</h2>
-            <form id="personalForm">
+            <form id="personalForm" onsubmit="savePersonalInfo(event)">
                 <div class="form-group">
                     <label>Full Name *</label>
                     <input type="text" id="fullName" placeholder="Your full name" required>
@@ -79,7 +80,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>CNIC (National ID) *</label>
+                    <label>CNIC (National ID)</label>
                     <input type="text" id="cnic" placeholder="12345-1234567-1">
                 </div>
 
@@ -101,7 +102,6 @@
                         <option value="Punjabi">Punjabi</option>
                         <option value="Sindhi">Sindhi</option>
                         <option value="Pashto">Pashto</option>
-                        <option value="Balochi">Balochi</option>
                     </select>
                 </div>
 
@@ -109,11 +109,12 @@
             </form>
         </div>
 
+        <!-- Medical Tab -->
         <div class="tab-content" id="medicalTab">
             <h2>Medical Information</h2>
             
             <div class="form-group">
-                <label>Blood Group *</label>
+                <label>Blood Group</label>
                 <select id="bloodGroup">
                     <option value="A+">A+</option>
                     <option value="A-">A-</option>
@@ -123,28 +124,22 @@
                     <option value="AB-">AB-</option>
                     <option value="O+">O+</option>
                     <option value="O-">O-</option>
-                    <option value="Unknown">Unknown</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label>Allergies (comma separated)</label>
-                <input type="text" id="allergies" placeholder="e.g., Penicillin, Peanuts, Latex">
+                <input type="text" id="allergies" placeholder="e.g., Penicillin, Peanuts">
             </div>
 
             <div class="form-group">
                 <label>Chronic Conditions</label>
-                <input type="text" id="conditions" placeholder="e.g., Diabetes, Hypertension, Asthma">
+                <input type="text" id="conditions" placeholder="e.g., Diabetes, Asthma">
             </div>
 
             <div class="form-group">
                 <label>Current Medications</label>
-                <input type="text" id="medications" placeholder="e.g., Metformin 500mg, Insulin">
-            </div>
-
-            <div class="form-group">
-                <label>Past Surgeries</label>
-                <input type="text" id="surgeries" placeholder="e.g., Appendectomy">
+                <input type="text" id="medications" placeholder="e.g., Metformin">
             </div>
 
             <div class="form-group checkbox">
@@ -152,29 +147,10 @@
                 <label for="organDonor">I am an organ donor</label>
             </div>
 
-            <div class="form-group">
-                <label>Insurance Provider</label>
-                <input type="text" id="insuranceProvider" placeholder="Insurance company">
-            </div>
-
-            <div class="form-group">
-                <label>Primary Physician</label>
-                <input type="text" id="physician" placeholder="Dr. Name - Phone">
-            </div>
-
-            <div class="form-group">
-                <label>Preferred Hospital</label>
-                <input type="text" id="hospital" placeholder="Hospital name">
-            </div>
-
-            <div class="form-group">
-                <label>Special Notes</label>
-                <textarea id="specialNotes" rows="3" placeholder="Other important medical info..."></textarea>
-            </div>
-
             <button class="save-btn" onclick="saveMedicalInfo()">💾 Save Medical Info</button>
         </div>
 
+        <!-- Contacts Tab -->
         <div class="tab-content" id="contactsTab">
             <h2>Emergency Contacts</h2>
             <p class="info-note">These contacts appear on lock screen</p>
@@ -185,19 +161,12 @@
             <button class="save-btn" onclick="saveAllContacts()">💾 Save All Contacts</button>
         </div>
 
+        <!-- Settings Tab -->
         <div class="tab-content" id="settingsTab">
             <h2>Settings</h2>
             
             <div class="settings-group">
                 <h3>App Settings</h3>
-                <div class="setting-item">
-                    <label>Theme</label>
-                    <select id="theme" onchange="changeTheme(this.value)">
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                    </select>
-                </div>
-                
                 <div class="setting-item">
                     <input type="checkbox" id="autoCall" checked>
                     <label for="autoCall">Auto-call contacts on SOS</label>
@@ -215,13 +184,18 @@
                 <p><strong>SafePass v1.0.0</strong></p>
                 <p>Developer: Muhammad Hasnain</p>
                 <p>Software Engineering Student, Pakistan</p>
-                <p>Made with ❤️ for humanity</p>
             </div>
         </div>
     </div>
 
+    <!-- Toast Notification -->
     <div class="toast-notification" id="toast">Notification</div>
 
+    <!-- JavaScript - Load in correct order -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
     <script src="auth.js"></script>
     <script src="dashboard.js"></script>
 </body>
