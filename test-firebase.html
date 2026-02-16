@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test SafePass Firebase</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <h1>🛡️ SafePass Firebase Test</h1>
+    <div id="status">Testing connection...</div>
+    
+    <script>
+        // Check if Firebase is working
+        setTimeout(() => {
+            if (firebase.apps.length) {
+                document.getElementById('status').innerHTML = 
+                    '✅ Firebase connected successfully!<br>' +
+                    'Project: safepass-emegency-app';
+            } else {
+                document.getElementById('status').innerHTML = 
+                    '❌ Firebase not connected';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
